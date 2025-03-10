@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from "react";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
-import Button from "@mui/material/Button";
-import { TableFooter, TablePagination, MenuItem, Select } from "@mui/material";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  TableFooter,
+  TablePagination,
+  MenuItem,
+  Select,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 
 export default function BasicTable() {
   const [orders, setOrders] = useState([]);
@@ -16,8 +23,17 @@ export default function BasicTable() {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [backlogReasons, setBacklogReasons] = useState([]);
   const [selectedReasons, setSelectedReasons] = useState({});
+  const [storeFilter, setStoreFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [productFilter, setProductFilter] = useState("");
+  const [uniqueStores, setUniqueStores] = useState([]);
+  const [uniqueProducts, setUniqueProducts] = useState([]);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // "error", "warning", "info"
+  const [backlogComments, setBacklogComments] = useState({}); // Object to store comments for each order
 
-  // Fetch Orders
   useEffect(() => {
     fetch("http://localhost:5000/api/orders/get-dispatch-backlog")
       .then((res) => res.json())
@@ -26,11 +42,22 @@ export default function BasicTable() {
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );
         setOrders(sortedData);
+
+        // Extract unique store names
+        const stores = [
+          ...new Set(sortedData.map((order) => order.store_name)),
+        ];
+        setUniqueStores(stores);
+
+        // Extract unique product names
+        const products = [
+          ...new Set(sortedData.map((order) => order.product_name)),
+        ];
+        setUniqueProducts(products);
       })
       .catch((err) => console.error("Error fetching orders:", err));
   }, []);
 
-  // Fetch Backlog Reasons
   useEffect(() => {
     fetch("http://localhost:5000/api/orders/get-backlog_reasons")
       .then((res) => res.json())
@@ -40,68 +67,136 @@ export default function BasicTable() {
       .catch((err) => console.error("Error fetching backlog reasons:", err));
   }, []);
 
-  // Handle Page Change
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
 
-  // Handle Rows Per Page Change
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
-  // Store Selected Reason (ID & Description)
-  const handleSelectReason = (orderId, reason) => {
-    setSelectedReasons((prev) => ({
-      ...prev,
-      [orderId]: {
-        backlog_reason_id: reason.backlog_reason_id,
-        backlog_reason_desc: reason.backlog_reason_desc,
-      },
-    }));
-  };
-
-  // Handle Update Button Click (Send Order ID, Reason ID & Description)
   const handleUpdateReason = async (orderId) => {
     try {
       const selectedReason = selectedReasons[orderId];
-  
-      if (!selectedReason || !selectedReason.backlog_reason_id || !selectedReason.backlog_reason_desc) {
-        console.error("Invalid backlog reason data for order ID:", orderId);
+      const comment = backlogComments[orderId] || "";
+
+      if (
+        !selectedReason ||
+        !selectedReason.backlog_reason_id ||
+        !selectedReason.backlog_reason_desc
+      ) {
+        setSnackbarMessage("Please select a valid backlog reason.");
+        setSnackbarSeverity("warning");
+        setSnackbarOpen(true);
         return;
       }
-  
-      const response = await fetch("http://localhost:5000/api/orders/update-backlog-reason", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          order_id: orderId,
-          backlog_reason_id: selectedReason.backlog_reason_id,
-          backlog_reason_desc: selectedReason.backlog_reason_desc,
-        }),
+
+      const response = await fetch(
+        "http://localhost:5000/api/orders/update-backlog-reason",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            order_id: orderId,
+            backlog_reason_id: selectedReason.backlog_reason_id,
+            backlog_reason_desc: selectedReason.backlog_reason_desc,
+            backlog_comment: comment,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error(`Failed: ${response.status}`);
+
+      // Clear the selected reason and comment for this order
+      setSelectedReasons((prev) => {
+        const updatedReasons = { ...prev };
+        delete updatedReasons[orderId]; // Remove the selected reason for this order
+        return updatedReasons;
       });
-  
-      if (!response.ok) {
-        throw new Error(`Failed to update backlog reason: ${response.status}`);
-      }
-  
-      const data = await response.json();
-      console.log("✅ Successfully updated backlog reason:", data);
-  
-      // Optionally, update UI state to reflect the changes
-  
+
+      setBacklogComments((prev) => {
+        const updatedComments = { ...prev };
+        delete updatedComments[orderId]; // Remove the comment for this order
+        return updatedComments;
+      });
+
+      setSnackbarMessage("Backlog reason updated successfully!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
     } catch (error) {
-      console.error("❌ Error updating backlog reason:", error);
+      setSnackbarMessage("Error updating backlog reason.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
     }
   };
-  
+
+  const filteredOrders = orders.filter((order) => {
+    return (
+      (!storeFilter || order.store_name === storeFilter) &&
+      (!statusFilter || order.status === statusFilter) &&
+      (!dateFilter || order.created_at.split("T")[0] === dateFilter) &&
+      (!productFilter || order.product_name === productFilter)
+    );
+  });
 
   return (
     <TableContainer component={Paper} sx={{ boxShadow: 3, overflowX: "auto" }}>
-      <Table sx={{ minWidth: 750 }} aria-label="orders table">
+      <div style={{ display: "flex", gap: "10px", padding: "10px" }}>
+        {/* Store Name Filter */}
+        <Select
+          value={storeFilter}
+          onChange={(e) => setStoreFilter(e.target.value)}
+          displayEmpty
+          sx={{ minWidth: 200 }}
+        >
+          <MenuItem value="">All Stores</MenuItem>
+          {uniqueStores.map((store, index) => (
+            <MenuItem key={index} value={store}>
+              {store}
+            </MenuItem>
+          ))}
+        </Select>
+
+        {/* Status Filter */}
+        <Select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          displayEmpty
+          sx={{ minWidth: 200 }}
+        >
+          <MenuItem value="">All Statuses</MenuItem>
+          {["Received", "Pending", "Completed"].map((status, index) => (
+            <MenuItem key={index} value={status}>
+              {status}
+            </MenuItem>
+          ))}
+        </Select>
+
+        {/* Product Name Filter */}
+        <Select
+          value={productFilter}
+          onChange={(e) => setProductFilter(e.target.value)}
+          displayEmpty
+          sx={{ minWidth: 200 }}
+        >
+          <MenuItem value="">All Products</MenuItem>
+          {uniqueProducts.map((product, index) => (
+            <MenuItem key={index} value={product}>
+              {product}
+            </MenuItem>
+          ))}
+        </Select>
+
+        {/* Date Filter */}
+        <input
+          type="date"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+        />
+      </div>
+
+      <Table sx={{ minWidth: 750, whiteSpace: "nowrap" }} aria-label="orders table">
         <TableHead sx={{ bgcolor: "#f5f5f5" }}>
           <TableRow>
             {[
@@ -111,9 +206,10 @@ export default function BasicTable() {
               "Total Amount",
               "Status",
               "Backlog Reason",
+              "Backlog Comments",
               "Action",
             ].map((header, index) => (
-              <TableCell key={index} align="center" sx={{ fontWeight: "bold" }}>
+              <TableCell key={index} align="center" sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
                 {header}
               </TableCell>
             ))}
@@ -121,18 +217,20 @@ export default function BasicTable() {
         </TableHead>
 
         <TableBody>
-          {orders
+          {filteredOrders
             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
             .map((order, index) => (
               <TableRow key={index} hover>
-                <TableCell align="center">{order.store_name}</TableCell>
-                <TableCell align="center">{order.created_at}</TableCell>
-                <TableCell align="center">{order.product_name}</TableCell>
-                <TableCell align="center">
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>{order.store_name}</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                  {order.created_at.split("T")[0]}
+                </TableCell>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>{order.product_name}</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   {order.product_final_price}
                 </TableCell>
-                <TableCell align="center">{order.status || "null"}</TableCell>
-                <TableCell align="center">
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>{order.status || "null"}</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Select
                     value={
                       selectedReasons[order.order_id]?.backlog_reason_id || ""
@@ -141,7 +239,14 @@ export default function BasicTable() {
                       const selectedReason = backlogReasons.find(
                         (r) => r.backlog_reason_id === e.target.value
                       );
-                      handleSelectReason(order.order_id, selectedReason);
+                      setSelectedReasons((prev) => ({
+                        ...prev,
+                        [order.order_id]: {
+                          backlog_reason_id: selectedReason.backlog_reason_id,
+                          backlog_reason_desc:
+                            selectedReason.backlog_reason_desc,
+                        },
+                      }));
                     }}
                     displayEmpty
                     sx={{ minWidth: 200 }}
@@ -159,7 +264,20 @@ export default function BasicTable() {
                     ))}
                   </Select>
                 </TableCell>
-                <TableCell align="center">
+                <TableCell sx={{ whiteSpace: "nowrap" }}>
+                  <input
+                    className="py-4 bg-white border-2 border-gray-200 focus:border-blue-200 outline-none text-gray-700 text-lg font-medium"
+                    type="text"
+                    value={backlogComments[order.order_id] || ""}
+                    onChange={(e) => {
+                      setBacklogComments((prev) => ({
+                        ...prev,
+                        [order.order_id]: e.target.value,
+                      }));
+                    }}
+                  />
+                </TableCell>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Button
                     variant="contained"
                     color="primary"
@@ -178,7 +296,7 @@ export default function BasicTable() {
           <TableRow>
             <TablePagination
               rowsPerPageOptions={[5, 10, 15]}
-              count={orders.length}
+              count={filteredOrders.length}
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={handleChangePage}
@@ -187,6 +305,19 @@ export default function BasicTable() {
           </TableRow>
         </TableFooter>
       </Table>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </TableContainer>
   );
 }

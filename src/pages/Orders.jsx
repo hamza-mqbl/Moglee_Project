@@ -1,13 +1,15 @@
-import React from 'react'
-import BasicTable from './BasicTable'
+import React from "react";
+import BasicTable from "./BasicTable";
+import { Header } from "../components";
 
 const Orders = () => {
   return (
-    <div className=' px-10 pt-[6rem] pb-[2rem] bg-red-300'>
+    <div className="m-2 md:m-10 mt-24 p-2 pb-4 md:p-10 bg-gray-200 md:rounded-3xl rounded-xl">
+      <Header category="Page" title="Orders" />
 
-      <BasicTable/>
+      <BasicTable />
     </div>
-  )
-}
+  );
+};
 
-export default Orders
+export default Orders;
