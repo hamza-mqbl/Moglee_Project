@@ -21,7 +21,6 @@ import product4 from './product4.jpg';
 import product5 from './product5.jpg';
 import product6 from './product6.jpg';
 import product7 from './product7.jpg';
-
 export const gridOrderImage = (props) => (
   <div>
     <img
@@ -869,55 +868,117 @@ export const userProfileData = [
   },
 ];
 
+// export const ordersGrid = [
+//   {
+//     headerText: 'store-name',
+//     template: gridOrderImage,
+//     textAlign: 'Center',
+//     width: '120',
+//   },
+//   {
+//     field: 'OrderItems',
+//     headerText: 'created-at',
+//     width: '150',
+//     editType: 'dropdownedit',
+//     textAlign: 'Center',
+//   },
+//   { field: 'CustomerName',
+//     headerText: 'Product-Name',
+//     width: '150',
+//     textAlign: 'Center',
+//   },
+//   {
+//     field: 'Status',
+//     headerText: 'Total Amount',
+//     format: 'C2',
+//     textAlign: 'Center',
+//     editType: 'numericedit',
+//     width: '150',
+//   },
+//   {
+//     headerText: 'Price',
+//     template: gridOrderStatus,  //status
+//     field: 'OrderItems',
+//     textAlign: 'Center',
+//     width: '120',
+//   },
+//   {
+//     field: 'OrderID',
+//     headerText: 'Backlog_Reason',
+//     width: '120',
+//     textAlign: 'Center',
+//   },
+
+//   {
+//     field: 'Location',
+//     headerText: 'Action',
+//     width: '150',
+//     textAlign: 'Center',
+//   },
+// ];
+// dummy.js
+
 export const ordersGrid = [
   {
-    headerText: 'Image',
-    template: gridOrderImage,
-    textAlign: 'Center',
-    width: '120',
+    field: "store_name",
+    headerText: "Store Name",
+    textAlign: "Center",
+    width: "120",
   },
   {
-    field: 'OrderItems',
-    headerText: 'Item',
-    width: '150',
-    editType: 'dropdownedit',
-    textAlign: 'Center',
-  },
-  { field: 'CustomerName',
-    headerText: 'Customer Name',
-    width: '150',
-    textAlign: 'Center',
+    field: "created_at",
+    headerText: "Created At",
+    width: "150",
+    editType: "dropdownedit",
+    textAlign: "Center",
   },
   {
-    field: 'TotalAmount',
-    headerText: 'Total Amount',
-    format: 'C2',
-    textAlign: 'Center',
-    editType: 'numericedit',
-    width: '150',
+    field: "product_name_unq",
+    headerText: "Product Name",
+    width: "150",
+    textAlign: "Center",
   },
   {
-    headerText: 'Status',
-    template: gridOrderStatus,
-    field: 'OrderItems',
-    textAlign: 'Center',
-    width: '120',
+    field: "total_price",
+    headerText: "Total Amount",
+    format: "C2",
+    textAlign: "Center",
+    editType: "numericedit",
+    width: "150",
   },
   {
-    field: 'OrderID',
-    headerText: 'Order ID',
-    width: '120',
-    textAlign: 'Center',
+    field: "financial_status",
+    headerText: "Status",
+    template: gridOrderStatus, // Assuming this is a custom template for status
+    textAlign: "Center",
+    width: "120",
   },
-
   {
-    field: 'Location',
-    headerText: 'Location',
-    width: '150',
-    textAlign: 'Center',
+    field: "backlog_reason",
+    headerText: "Backlog Reason",
+    template: (props) => (
+      <BacklogReasonTemplate
+        {...props}
+        backlogReasons={props.backlogReasons} // Pass backlogReasons here
+        backlogReasonChange={props.backlogReasonChange}
+      />
+    ),
+    width: "120",
+    textAlign: "Center",
+  },
+  {
+    field: "action",
+    headerText: "Action",
+    template: (props) => (
+      <ActionTemplate
+        {...props}
+        handleUpdate={props.handleUpdate}
+      />
+    ),
+    width: "150",
+    textAlign: "Center",
   },
 ];
-
 export const customersData = [
   {
     CustomerID: 1001,

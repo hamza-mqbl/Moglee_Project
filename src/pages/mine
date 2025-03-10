@@ -1,0 +1,187 @@
+import React, { useState } from "react";
+import {
+  ColumnsDirective,
+  GridComponent,
+  ColumnDirective,
+  Resize,
+  ContextMenu,
+  Sort,
+  Filter,
+  ExcelExport,
+  Page,
+  Edit,
+  Inject,
+  PdfExport,
+} from "@syncfusion/ej2-react-grids";
+import { DropDownListComponent } from "@syncfusion/ej2-react-dropdowns";
+import { Header } from "../components";
+import { contextMenuItems, gridOrderStatus } from "../data/dummy";
+
+const Orders = () => {
+  const editing = { allowDeleting: false, allowEditing: false };
+  const [orders, setOrders] = useState([]);
+
+  // Hardcoded backlog reasons
+  const backlogReasons = [
+    { backlog_reason_id: 1, backlog_reason_desc: "Inventory Not Available" },
+    { backlog_reason_id: 2, backlog_reason_desc: "Order to be Confirmed" },
+    { backlog_reason_id: 3, backlog_reason_desc: "Incomplete Details" },
+    { backlog_reason_id: 4, backlog_reason_desc: "Delivery City Not Available" },
+    { backlog_reason_id: 5, backlog_reason_desc: "Customer Hold" },
+    { backlog_reason_id: 6, backlog_reason_desc: "Other" },
+    { backlog_reason_id: 7, backlog_reason_desc: "Manually Fulfilled" },
+  ];
+
+  
+
+  // Handle backlog reason change
+  const handleBacklogReasonChange = (orderId, reason) => {
+    const updatedOrders = orders.map((order) =>
+      order.order_id === orderId ? { ...order, backlog_reason: reason } : order
+    );
+    setOrders(updatedOrders);
+  };
+
+  // Handle update action
+  const handleUpdate = (orderId) => {
+    const orderToUpdate = orders.find((order) => order.order_id === orderId);
+    if (orderToUpdate) {
+      console.log("Updating order:", orderToUpdate);
+
+      // Send the updated order to the backend
+      fetch("http://localhost:5000/api/orders/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(orderToUpdate),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("🚀 ~ Order updated successfully:", data);
+        })
+        .catch((err) => console.error("Error updating order:", err));
+    }
+  };
+
+  // Dropdown component
+  const BacklogReasonDropdown = ({ order_id, backlogReasonChange }) => {
+    const [selectedReason, setSelectedReason] = useState(null);
+
+    const handleReasonChange = (reason) => {
+      setSelectedReason(reason);
+      backlogReasonChange(order_id, reason);
+    };
+
+    return (
+      <DropDownListComponent
+        dataSource={backlogReasons}
+        fields={{ text: "backlog_reason_desc", value: "backlog_reason_id" }}
+        value={selectedReason}
+        change={(e) => handleReasonChange(e.value)}
+        placeholder="Select a reason"
+      />
+    );
+  };
+
+  // Define ordersGrid
+  const ordersGrid = [
+    {
+      field: "store_name",
+      headerText: "Store Name",
+      textAlign: "Center",
+      width: "120",
+    },
+    {
+      field: "created_at",
+      headerText: "Created At",
+      width: "150",
+      editType: "dropdownedit",
+      textAlign: "Center",
+    },
+    {
+      field: "product_name_unq",
+      headerText: "Product Name",
+      width: "150",
+      textAlign: "Center",
+    },
+    {
+      field: "total_price",
+      headerText: "Total Amount",
+      format: "C2",
+      textAlign: "Center",
+      editType: "numericedit",
+      width: "150",
+    },
+    {
+      field: "financial_status",
+      headerText: "Status",
+      template: gridOrderStatus,
+      textAlign: "Center",
+      width: "120",
+    },
+    {
+      field: "backlog_reason",
+      headerText: "Backlog Reason",
+      template: (props) => (
+        <BacklogReasonDropdown
+          {...props}
+          backlogReasonChange={handleBacklogReasonChange}
+        />
+      ),
+      width: "120",
+      textAlign: "Center",
+    },
+    {
+      field: "action",
+      headerText: "Action",
+      template: (props) => (
+        <button
+          onClick={() => handleUpdate(props.order_id)}
+          className="e-small e-primary"
+        >
+          Update
+        </button>
+      ),
+      width: "150",
+      textAlign: "Center",
+    },
+  ];
+
+  return (
+    <div className="m-2 md:m-10 mt-24 p-2 pb-4 md:p-10 bg-gray-200 md:rounded-3xl rounded-xl">
+      <Header category="Page" title="Orders" />
+      <GridComponent
+        dataSource={orders || []}
+        allowPaging
+        allowSorting
+        allowExcelExport
+        allowPdfExport
+        contextMenuItems={contextMenuItems}
+        editSettings={editing}
+      >
+        <ColumnsDirective>
+          {ordersGrid.map((item, index) => (
+            <ColumnDirective
+              key={index}
+              {...item}
+              template={item.template} // Use the template defined in ordersGrid
+            />
+          ))}
+        </ColumnsDirective>
+        <Inject
+          services={[
+            Resize,
+            Sort,
+            ContextMenu,
+            Filter,
+            Page,
+            Edit,
+            ExcelExport,
+            PdfExport,
+          ]}
+        />
+      </GridComponent>
+    </div>
+  );
+};
+
+export default Orders;
