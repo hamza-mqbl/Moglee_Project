@@ -15,27 +15,33 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-
+import config from "../server";
 export default function BasicTable() {
+  console.log(config.server)
   const [orders, setOrders] = useState([]);
-  console.log("🚀 ~ BasicTable ~ orders:", orders)
+  console.log("🚀 ~ BasicTable ~ orders:", orders);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [backlogReasons, setBacklogReasons] = useState([]);
   const [selectedReasons, setSelectedReasons] = useState({});
   const [storeFilter, setStoreFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [fulfillStatusFilter, setFulfillSStatusFilter] = useState("");
+
   const [dateFilter, setDateFilter] = useState("");
   const [productFilter, setProductFilter] = useState("");
   const [uniqueStores, setUniqueStores] = useState([]);
   const [uniqueProducts, setUniqueProducts] = useState([]);
+  const [uniqueStatuses, setUniqueStatuses] = useState([]); // New state for unique statuses
+  const [uniqueFulfillStatuses, setUniqueFulfillStatuses] = useState([]); // New state for unique statuses
+
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState("success"); // "error", "warning", "info"
-  const [backlogComments, setBacklogComments] = useState({}); // Object to store comments for each order
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+  const [backlogComments, setBacklogComments] = useState({});
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/orders/get-dispatch-backlog")
+    fetch(`${config.server}/api/orders/get-dispatch-backlog`)
       .then((res) => res.json())
       .then((data) => {
         const sortedData = data.sort(
@@ -54,12 +60,21 @@ export default function BasicTable() {
           ...new Set(sortedData.map((order) => order.product_name)),
         ];
         setUniqueProducts(products);
+
+        // Extract unique statuses
+        const statuses = [...new Set(sortedData.map((order) => order.status))];
+        setUniqueStatuses(statuses);
+        // extract unique fulfill statuses
+        const fulfillStatuses = [
+          ...new Set(sortedData.map((order) => order.fulfillment_status)),
+        ];
+        setUniqueFulfillStatuses(fulfillStatuses);
       })
       .catch((err) => console.error("Error fetching orders:", err));
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/orders/get-backlog_reasons")
+    fetch(`${config.server}/api/orders/get-backlog_reasons`)
       .then((res) => res.json())
       .then((data) => {
         setBacklogReasons(data);
@@ -93,7 +108,7 @@ export default function BasicTable() {
       }
 
       const response = await fetch(
-        "http://localhost:5000/api/orders/update-backlog-reason",
+        `${config.server}/api/orders/update-backlog-reason`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -111,13 +126,13 @@ export default function BasicTable() {
       // Clear the selected reason and comment for this order
       setSelectedReasons((prev) => {
         const updatedReasons = { ...prev };
-        delete updatedReasons[orderId]; // Remove the selected reason for this order
+        delete updatedReasons[orderId];
         return updatedReasons;
       });
 
       setBacklogComments((prev) => {
         const updatedComments = { ...prev };
-        delete updatedComments[orderId]; // Remove the comment for this order
+        delete updatedComments[orderId];
         return updatedComments;
       });
 
@@ -136,7 +151,8 @@ export default function BasicTable() {
       (!storeFilter || order.store_name === storeFilter) &&
       (!statusFilter || order.status === statusFilter) &&
       (!dateFilter || order.created_at.split("T")[0] === dateFilter) &&
-      (!productFilter || order.product_name === productFilter)
+      (!productFilter || order.product_name === productFilter) &&
+      (!fulfillStatusFilter || order.fulfillment_status === fulfillStatusFilter)
     );
   });
 
@@ -166,13 +182,26 @@ export default function BasicTable() {
           sx={{ minWidth: 200 }}
         >
           <MenuItem value="">All Statuses</MenuItem>
-          {["Received", "Pending", "Completed"].map((status, index) => (
+          {uniqueStatuses.map((status, index) => (
             <MenuItem key={index} value={status}>
               {status}
             </MenuItem>
           ))}
         </Select>
-
+        {/* fulfillStatus Filter */}
+        <Select
+          value={fulfillStatusFilter}
+          onChange={(e) => setFulfillSStatusFilter(e.target.value)}
+          displayEmpty
+          sx={{ minWidth: 200 }}
+        >
+          <MenuItem value="">All Fulfillment Status</MenuItem>
+          {uniqueFulfillStatuses.map((fulfillstatus, index) => (
+            <MenuItem key={index} value={fulfillstatus}>
+              {fulfillstatus}
+            </MenuItem>
+          ))}
+        </Select>
         {/* Product Name Filter */}
         <Select
           value={productFilter}
@@ -196,7 +225,10 @@ export default function BasicTable() {
         />
       </div>
 
-      <Table sx={{ minWidth: 750, whiteSpace: "nowrap" }} aria-label="orders table">
+      <Table
+        sx={{ minWidth: 750, whiteSpace: "nowrap" }}
+        aria-label="orders table"
+      >
         <TableHead sx={{ bgcolor: "#f5f5f5" }}>
           <TableRow>
             {[
@@ -205,11 +237,16 @@ export default function BasicTable() {
               "Product Name",
               "Total Amount",
               "Status",
+              "Fulfillment Status",
               "Backlog Reason",
               "Backlog Comments",
               "Action",
             ].map((header, index) => (
-              <TableCell key={index} align="center" sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}>
+              <TableCell
+                key={index}
+                align="center"
+                sx={{ fontWeight: "bold", whiteSpace: "nowrap" }}
+              >
                 {header}
               </TableCell>
             ))}
@@ -221,15 +258,24 @@ export default function BasicTable() {
             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
             .map((order, index) => (
               <TableRow key={index} hover>
-                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>{order.store_name}</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                  {order.store_name}
+                </TableCell>
                 <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   {order.created_at.split("T")[0]}
                 </TableCell>
-                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>{order.product_name}</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                  {order.product_name}
+                </TableCell>
                 <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   {order.product_final_price}
                 </TableCell>
-                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>{order.status || "null"}</TableCell>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                  {order.status || "null"}
+                </TableCell>
+                <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
+                  {order.fulfillment_status || "null"}
+                </TableCell>
                 <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>
                   <Select
                     value={
