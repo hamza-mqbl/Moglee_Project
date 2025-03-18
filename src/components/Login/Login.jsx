@@ -26,10 +26,11 @@ export const LoginComponent = () => {
         { withCredentials: true }
       )
       .then((res) => {
-        console.log("🚀 ~ .then ~ res:", res)
+        console.log("🚀 ~ .then ~ res:", res);
         setSnackbarMessage("Login Succesfully!");
         setSnackbarSeverity("success");
         setSnackbarOpen(true);
+
         nevigate("/");
         window.location.reload(true);
       })
