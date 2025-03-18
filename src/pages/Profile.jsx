@@ -1,15 +1,15 @@
 import React from "react";
-import BasicTable from "./BasicTable";
+import ProfileComponent from "../components/ProfileComponent.jsx";
 import { Header } from "../components";
 
-const Orders = () => {
+const Profile = () => {
   return (
     <div className="m-2 md:m-10 mt-24 p-2 pb-4 md:p-10 bg-gray-200 md:rounded-3xl rounded-xl">
-      <Header category="Page" title="Backlog Table" />
+      <Header category="Page" title="Profile" />
 
-      <BasicTable />
+      <ProfileComponent />
     </div>
   );
 };
 
-export default Orders;
+export default Profile;

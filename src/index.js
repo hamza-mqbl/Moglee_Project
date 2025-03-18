@@ -1,12 +1,16 @@
-import ReactDOM from "react-dom";
-import "./index.css";
-import "./App.css";
-import { App } from "./App";
-import { ContextProvider } from "./contexts/ContextProvider";
+import React from "react";
+import { createRoot } from "react-dom/client";
+import {App} from "./App";
+import { Provider } from "react-redux";
+import Store from "./redux/store"; // Import your Redux store
+import { ContextProvider } from "./contexts/ContextProvider"; // Your custom context provider
+import "./index.css"
+const root = createRoot(document.getElementById("root"));
 
-ReactDOM.render(
-  <ContextProvider>
-    <App />
-  </ContextProvider>,
-  document.getElementById("root")
+root.render(
+  <Provider store={Store}>
+    <ContextProvider>
+      <App />
+    </ContextProvider>
+  </Provider>
 );

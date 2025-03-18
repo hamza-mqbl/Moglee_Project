@@ -21,8 +21,9 @@ import config from "../server";
 
 export default function BasicTable() {
   const [orders, setOrders] = useState([]);
+  console.log("🚀 ~ BasicTable ~ orders:", orders)
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
   const [backlogReasons, setBacklogReasons] = useState([]);
   const [selectedReasons, setSelectedReasons] = useState({});
   const [storeFilter, setStoreFilter] = useState("");
@@ -44,7 +45,7 @@ export default function BasicTable() {
     const fetchOrders = async () => {
       try {
         const response = await fetch(
-          `${config.server}/api/orders/get-dispatch-backlog`
+          `${config.server}api/orders/get-dispatch-backlog`
         );
         const data = await response.json();
         const sortedData = data.sort(
@@ -77,7 +78,7 @@ export default function BasicTable() {
     const fetchBacklogReasons = async () => {
       try {
         const response = await fetch(
-          `${config.server}/api/orders/get-backlog_reasons`
+          `${config.server}api/orders/get-backlog_reasons`
         );
         const data = await response.json();
         setBacklogReasons(data);
@@ -120,7 +121,7 @@ export default function BasicTable() {
       }
 
       const response = await fetch(
-        `${config.server}/api/orders/update-backlog-reason`,
+        `${config.server}api/orders/update-backlog-reason`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
