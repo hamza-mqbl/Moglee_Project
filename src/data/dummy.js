@@ -25,7 +25,7 @@ import {
 } from "react-icons/bs";
 import { BiColorFill } from "react-icons/bi";
 import { IoMdContacts } from "react-icons/io";
-import { RiContactsLine, RiStockLine } from "react-icons/ri";
+import { RiContactsLine, RiLockPasswordLine, RiStockLine } from "react-icons/ri";
 import { MdOutlineSupervisorAccount } from "react-icons/md";
 import { HiOutlineRefresh } from "react-icons/hi";
 import { TiTick } from "react-icons/ti";
@@ -508,15 +508,15 @@ export const employeesGrid = [
 ];
 
 export const links = [
-  {
-    title: "Dashboard",
-    links: [
-      {
-        name: "ecommerce",
-        icon: <FiShoppingBag />,
-      },
-    ],
-  },
+  // {
+  //   title: "Dashboard",
+  //   links: [
+  //     {
+  //       name: "ecommerce",
+  //       icon: <FiShoppingBag />,
+  //     },
+  //   ],
+  // },
 
   {
     title: "Pages",
@@ -526,13 +526,13 @@ export const links = [
         icon: <AiOutlineShoppingCart />,
       },
       {
-        name: "employees",
+        name: "updated-orders",
         icon: <IoMdContacts />,
       },
-      {
-        name: "customers",
-        icon: <RiContactsLine />,
-      },
+      // {
+      //   name: "customers",
+      //   icon: <RiContactsLine />,
+      // },
       // {
       //   name: "profile",
       //   icon: <RiContactsLine />,
@@ -563,53 +563,49 @@ export const links = [
         icon: <RiContactsLine />,
       },
       {
-        name: "Address",
-        icon: <RiContactsLine />,
-      },
-      {
         name: "Password",
-        icon: <RiContactsLine />,
+        icon: <RiLockPasswordLine />,
       },
     ],
   },
-  {
-    title: "Charts",
-    links: [
-      {
-        name: "line",
-        icon: <AiOutlineStock />,
-      },
-      {
-        name: "area",
-        icon: <AiOutlineAreaChart />,
-      },
+  // {
+  //   title: "Charts",
+  //   links: [
+  //     {
+  //       name: "line",
+  //       icon: <AiOutlineStock />,
+  //     },
+  //     {
+  //       name: "area",
+  //       icon: <AiOutlineAreaChart />,
+  //     },
 
-      {
-        name: "bar",
-        icon: <AiOutlineBarChart />,
-      },
-      {
-        name: "pie",
-        icon: <FiPieChart />,
-      },
-      {
-        name: "financial",
-        icon: <RiStockLine />,
-      },
-      {
-        name: "color-mapping",
-        icon: <BsBarChart />,
-      },
-      {
-        name: "pyramid",
-        icon: <GiLouvrePyramid />,
-      },
-      {
-        name: "stacked",
-        icon: <AiOutlineBarChart />,
-      },
-    ],
-  },
+  //     {
+  //       name: "bar",
+  //       icon: <AiOutlineBarChart />,
+  //     },
+  //     {
+  //       name: "pie",
+  //       icon: <FiPieChart />,
+  //     },
+  //     {
+  //       name: "financial",
+  //       icon: <RiStockLine />,
+  //     },
+  //     {
+  //       name: "color-mapping",
+  //       icon: <BsBarChart />,
+  //     },
+  //     {
+  //       name: "pyramid",
+  //       icon: <GiLouvrePyramid />,
+  //     },
+  //     {
+  //       name: "stacked",
+  //       icon: <AiOutlineBarChart />,
+  //     },
+  //   ],
+  // },
 ];
 
 export const cartData = [

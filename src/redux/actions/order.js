@@ -1,20 +1,21 @@
 import axios from "axios";
-import { server } from "../../server";
+import config from "../../server.js";
 
 // get all orders of a user
 
-export const getAllOrdersOfUser = (userId) => async (dispatch) => {
-  console.log("🚀 ~ getAllOrdersOfUser ~ userId:", userId)
+export const getAllOrders = () => async (dispatch) => {
   try {
     dispatch({
       type: "getAllOrderUserRequest",
     });
     const { data } = await axios.get(
-      `${server}/order/get-all-orders/${userId}`
+      `${config.server}api/orders/get-updated-dispatch-backlog`
     );
+    console.log("🚀 ~ getAllOrders ~ data:", data);
+
     dispatch({
       type: "getAllOrderUserSuccess",
-      payload: data.orders,
+      payload: data,
     });
   } catch (error) {
     dispatch({
@@ -23,26 +24,24 @@ export const getAllOrdersOfUser = (userId) => async (dispatch) => {
     });
   }
 };
+export const getDispatchBacklogReasons = () => async (dispatch) => {
+  try {
+    dispatch({
+      type: "getDispatchBacklogReasonsRequest",
+    });
+    const { data } = await axios.get(
+      `${config.server}api/orders/get-backlog_reasons`
+    );
+    console.log("🚀 ~ getAllOrders ~ data:", data);
 
-export const getAllOrdersOfShop = (shopId) => async (dispatch) => {
-    console.log("🚀 ~ getAllOrdersOfShop ~ shopId:", shopId)
-    try {
-      dispatch({
-        type: "getAllOrderShopRequest",
-      });
-      const { data } = await axios.get(
-        `${server}/order/get-seller-all-orders/${shopId}`
-      );
-      console.log("🚀 ~ getAllOrdersOfShop ~ data:", data)
-      dispatch({
-        type: "getAllOrderShopSuccess",
-        payload: data.orders,
-      });
-    } catch (error) {
-      dispatch({
-        type: "getAllOrderShopFail",
-        payload: error.response.data.message,
-      });
-    }
-  };
-  
+    dispatch({
+      type: "getDispatchBacklogReasonsSuccess",
+      payload: data,
+    });
+  } catch (error) {
+    dispatch({
+      type: "getDispatchBacklogReasonsFail",
+      payload: error.response.data.message,
+    });
+  }
+};

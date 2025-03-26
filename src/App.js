@@ -6,6 +6,7 @@ import { useStateContext } from "./contexts/ContextProvider";
 import {
   Ecommerce,
   Orders,
+  UpdatedOrders,
   Employees,
   Customers,
   Calendar,
@@ -32,6 +33,7 @@ import { loadUser } from "./redux/actions/user";
 import Store from "./redux/store";
 import { useSelector } from "react-redux";
 import Loader from "./components/Loader/Loader.jsx"
+import { getAllOrders, getDispatchBacklogReasons } from "./redux/actions/order.js";
 // Create a new component for the app content
 const AppContent = () => {
   const {
@@ -94,11 +96,11 @@ const AppContent = () => {
                 path="/"
                 element={
                   <ProtectedRoute>
-                    <Ecommerce />
+                    <Orders />
                   </ProtectedRoute>
                 }
               />
-              <Route path="/ecommerce" element={<Ecommerce />} />
+              {/* <Route path="/ecommerce" element={<Ecommerce />} /> */}
               <Route path="/orders" element={<Orders />} />
               {/* <Route path="/profile" element={<Profile />} /> */}
               <Route
@@ -124,22 +126,22 @@ const AppContent = () => {
                 </ProtectedRoute>
               }
             />
-              <Route path="/employees" element={<Employees />} />
-              <Route path="/customers" element={<Customers />} />
+              <Route path="/updated-orders" element={<UpdatedOrders />} />
+              {/* <Route path="/customers" element={<Customers />} />
               {/* App */}
-              <Route path="/calendar" element={<Calendar />} />
+              {/* <Route path="/calendar" element={<Calendar />} />
               <Route path="/kanban" element={<Kanban />} />
               <Route path="/editor" element={<Editor />} />
-              <Route path="/color-picker" element={<ColorPicker />} />
+              <Route path="/color-picker" element={<ColorPicker />} /> */}
               {/* Charts */}
-              <Route path="/line" element={<Line />} />
+              {/* <Route path="/line" element={<Line />} />
               <Route path="/pie" element={<Pie />} />
               <Route path="/stacked" element={<StackedChart />} />
               <Route path="/area" element={<Area />} />
               <Route path="/bar" element={<Bar />} />
               <Route path="/color-mapping" element={<ColorMapping />} />
               <Route path="/financial" element={<Financial />} />
-              <Route path="/pyramid" element={<Pyramid />} />
+              <Route path="/pyramid" element={<Pyramid />} /> */}
             </Routes>
           </div>
           {!isAuthPage && <Footer />}
@@ -165,6 +167,10 @@ export const App = () => {
   useEffect(() => {
     console.log("useefect is running");
     Store.dispatch(loadUser());
+    Store.dispatch(getAllOrders());
+    Store.dispatch(getDispatchBacklogReasons());
+
+
   }, []);
   return (
     <>

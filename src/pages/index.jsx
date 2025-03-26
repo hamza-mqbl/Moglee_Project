@@ -1,5 +1,7 @@
 export { default as Ecommerce } from "./Ecommerce";
 export { default as Orders } from "./Orders";
+export { default as UpdatedOrders } from "./UpdatedOrders";
+
 export { default as Profile } from "./Profile";
 export { default as Login } from "./Login";
 export { default as SignUp } from "./SignUp";

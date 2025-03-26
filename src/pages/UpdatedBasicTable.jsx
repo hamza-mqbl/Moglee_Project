@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Table,
   TableBody,
@@ -18,10 +19,12 @@ import {
   Box,
 } from "@mui/material";
 import config from "../server";
-import { useSelector } from "react-redux";
-import Loader from "../components/Loader/Loader";
+import { getAllOrders } from "../redux/actions/order";
 
 export default function BasicTable() {
+  const { orders, backLogReasons, isLoading, loading } = useSelector(
+    (state) => state.orders
+  );
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(50);
   const [selectedReasons, setSelectedReasons] = useState({});
@@ -38,12 +41,39 @@ export default function BasicTable() {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const [backlogComments, setBacklogComments] = useState({});
-  const { orders, backLogReasons, isLoading, loading } = useSelector(
-    (state) => state.orders
-  );
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (orders && backLogReasons?.length > 0) {
+      const initialSelectedReasons = {};
+      orders.forEach((order) => {
+        if (order.backlog_reason_id) {
+          const reason = backLogReasons?.find(
+            (r) => r.backlog_reason_id === order.backlog_reason_id
+          );
+          if (reason) {
+            initialSelectedReasons[order.order_id] = {
+              backlog_reason_id: reason.backlog_reason_id,
+              backlog_reason_desc: reason.backlog_reason_desc,
+            };
+          }
+        }
+      });
+      setSelectedReasons(initialSelectedReasons);
+    }
+  }, [orders, backLogReasons]);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   const filteredOrders = orders
-    ?.filter((order) => order.backlog_reason_id == null)
+    ?.filter((order) => order.backlog_reason_id !== null)
     .filter((order) => {
       return (
         (!storeFilter || order.store_name === storeFilter) &&
@@ -77,15 +107,37 @@ export default function BasicTable() {
       setUniqueFulfillStatuses(fulfillStatuses);
     }
   }, []);
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
+  useEffect(() => {
+    if (storeFilter) {
+      const filteredProducts = [
+        ...new Set(
+          filteredOrders
+            ?.filter((order) => order.store_name === storeFilter)
+            .map((order) => order.product_name)
+        ),
+      ];
+      setUniqueProducts(filteredProducts);
+    } else {
+      const allProducts = [
+        ...new Set(filteredOrders?.map((order) => order.product_name)),
+      ];
+      setUniqueProducts(allProducts);
+    }
+  }, [storeFilter, orders]);
+  if (loading || isLoading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+        mt={-10}
+      >
+        <CircularProgress size={50} />
+      </Box>
+    );
+  }
   const handleUpdateReason = async (orderId) => {
     try {
       const selectedReason = selectedReasons[orderId];
@@ -115,48 +167,22 @@ export default function BasicTable() {
           }),
         }
       );
-
-      if (!response.ok) throw new Error(`Failed: ${response.status}`);
-
-      setSelectedReasons((prev) => {
-        const updatedReasons = { ...prev };
-        delete updatedReasons[orderId];
-        return updatedReasons;
-      });
-
+      console.log("🚀 ~ handleUpdateReason ~ response:", response);
       setBacklogComments((prev) => {
         const updatedComments = { ...prev };
         delete updatedComments[orderId];
         return updatedComments;
       });
-
       setSnackbarMessage("Backlog reason updated successfully!");
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
+      dispatch(getAllOrders());
     } catch (error) {
       setSnackbarMessage("Error updating backlog reason.");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
     }
   };
-  useEffect(() => {
-    if (storeFilter) {
-      const filteredProducts = [
-        ...new Set(
-          filteredOrders
-            ?.filter((order) => order.store_name === storeFilter)
-            .map((order) => order.product_name)
-        ),
-      ];
-      setUniqueProducts(filteredProducts);
-    } else {
-      const allProducts = [
-        ...new Set(filteredOrders?.map((order) => order.product_name)),
-      ];
-      setUniqueProducts(allProducts);
-    }
-  }, [storeFilter, filteredOrders]);
-
   return (
     <>
       {isLoading || loading ? (
@@ -290,7 +316,7 @@ export default function BasicTable() {
                           ""
                         }
                         onChange={(e) => {
-                          const selectedReason = backLogReasons?.find(
+                          const selectedReason = backLogReasons.find(
                             (r) => r.backlog_reason_id === e.target.value
                           );
                           setSelectedReasons((prev) => ({
@@ -309,7 +335,7 @@ export default function BasicTable() {
                         <MenuItem value="" disabled>
                           Select a reason
                         </MenuItem>
-                        {backLogReasons?.map((reason) => (
+                        {backLogReasons.map((reason) => (
                           <MenuItem
                             key={reason.backlog_reason_id}
                             value={reason.backlog_reason_id}

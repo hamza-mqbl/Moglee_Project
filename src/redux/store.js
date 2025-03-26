@@ -4,7 +4,7 @@ import { orderReducer } from "./reducers/order";
 const Store = configureStore({
   reducer: {
     user: userReducer,
-    order: orderReducer,
+    orders: orderReducer,
   },
 });
 
